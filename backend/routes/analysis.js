@@ -23,7 +23,7 @@ router.get('/top_hotspots', async (req, res) => {
                 WHEN (death_count * 10) + (accident_count * 5) + (casualty_count * 1) >= 300 THEN '경계'
                 ELSE '주의'
             END) AS calculated_risk_level
-        FROM ACCIDENT_HOTSPOTS
+        FROM accident_hotspots
         ORDER BY total_risk_index DESC
         LIMIT 10;
     `;
@@ -38,7 +38,7 @@ router.get('/top_hotspots', async (req, res) => {
         }
         
         // SAFETY_MEASURES 테이블에서 위험 등급별 조언을 가져옵니다.
-        const adviceQuery = `SELECT RISK_LEVEL, DETAIL_ADVICE FROM SAFETY_MEASURES WHERE RISK_LEVEL IN (?)`;
+        const adviceQuery = `SELECT RISK_LEVEL, DETAIL_ADVICE FROM safety_measures WHERE RISK_LEVEL IN (?)`;
         const [adviceRows] = await pool.query(adviceQuery, [riskLevels]);
 
         const adviceMap = adviceRows.reduce((map, row) => {
@@ -75,7 +75,7 @@ router.get('/nearby_hotspots', async (req, res) => {
             SELECT 
                 fid AS HOTSPOT_ID, city_district_name AS GU_NAME, spot_name AS LOCATION_NAME, latitude AS LATITUDE, longitude AS LONGITUDE,
                 death_count, accident_count, casualty_count
-            FROM ACCIDENT_HOTSPOTS
+            FROM accident_hotspots
             WHERE 
                 latitude BETWEEN ? - ? AND ? + ? AND
                 longitude BETWEEN ? - ? AND ? + ?

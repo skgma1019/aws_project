@@ -3,10 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise'); 
+require('dotenv').config({
+	path: path.resolve(__dirname, "../.env")
+});
 
 // ----------------- 🛠️ 설정 변수 🛠️ -----------------
 const JSON_FILE_PATH = 'dataset_converted.json';
-const TABLE_NAME = 'ACCIDENT_HOTSPOTS';
+const TABLE_NAME = 'accident_hotspots';
 
 // 💡 JSON 파일의 영문 키 이름과 정확히 일치하도록 수정
 const COLUMN_NAMES = [
@@ -18,11 +21,11 @@ const COLUMN_NAMES = [
 
 // ❗❗ MySQL 연결 정보 ❗❗ (반드시 본인의 정보로 수정)
 const DB_CONFIG = {
-    host: 'localhost',
-    user: 'root',
-    password: '1234', // <-- 비밀번호 정확히 수정!
-    database: 'accident',
-    port: 3306,
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD, 
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT || 3306),
     charset: 'utf8mb4'
 };
 // ----------------------------------------------------
@@ -87,25 +90,23 @@ async function loadJsonToMysql() {
         // 이 줄에서 변수가 정의되고 실행됩니다.
         await connection.execute(createTableQuery); 
         console.log(`✅ 새 테이블 '${TABLE_NAME}' 생성 완료.`);
+// 3-3. 대량 삽입 쿼리 준비
+const valuesToInsert = jsonData.map(record => {
+  return COLUMN_NAMES.map(col => {
+    const value = record[col];
+    // Null 값 처리: Node.js undefined/null을 MySQL NULL로
+    return (value === undefined || value === null) ? null : value;
+  });
+});
 
-        // 3-3. 대량 삽입 쿼리 준비
-        const valuesToInsert = jsonData.map(record => {
-            return COLUMN_NAMES.map(col => {
-                const value = record[col];
-                // Null 값 처리: Node.js undefined/null을 MySQL NULL로
-                return (value === undefined || value === null) ? null : value;
-            });
-        });
-        
-        // 3-4. executemany로 대량 삽입 실행
-        const columns = COLUMN_NAMES.join(', '); // 영문 컬럼명이므로 백틱 불필요
-        const insertQuery = `INSERT INTO ${TABLE_NAME} (${columns}) VALUES ?`;
-        
-        // connection.query(insertQuery, [valuesToInsert]); 형태로 배열의 배열을 전달
-        const [result] = await connection.query(insertQuery, [valuesToInsert]);
+// 3-4. executemany로 대량 삽입 실행
+const columns = COLUMN_NAMES.join(', ');
+const insertQuery = `INSERT INTO ${TABLE_NAME} (${columns}) VALUES ?`;
 
-        console.log(`\n🎉 성공! 데이터 총 ${result.affectedRows}개 행이 MySQL에 저장되었습니다.`);
+// connection.query(insertQuery, [valuesToInsert]); 형태로 배열의 배열을 전달
+const [result] = await connection.query(insertQuery, [valuesToInsert]);
 
+console.log(`\n🎉 성공! 데이터 총 ${result.affectedRows}개 행이 MySQL에 저장되었습니다.`);
     } catch (e) {
         console.error('\n❌ 데이터 삽입 중 최종 오류 발생:', e.message);
     } finally {

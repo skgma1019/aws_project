@@ -1,0 +1,63 @@
+/* frontend/src/Header.css */
+
+/* ==================================== */
+/* 1. 헤더 스타일 (모바일 레이아웃) */
+/* ==================================== */
+.app-header {
+  height: 56px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* 요소 정렬 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+
+  /* 모바일 상단 고정 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 20;
+}
+
+/* 제목 스타일 */
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  flex-grow: 1;
+  text-align: center;
+  min-width: 0;
+  margin: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 좌우 아이콘/버튼 공통 스타일 */
+.icon-button,
+.action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 16px;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* 삼선 아이콘 */
+.icon-button .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* "현재 위치로" 버튼 */
+.action-button {
+  font-weight: 600;
+  color: #1a73e8; /* 강조 색상 */
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-left: auto;
+}

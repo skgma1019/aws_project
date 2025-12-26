@@ -1,0 +1,42 @@
+.map-container {
+  position: relative;
+  width: 100%;
+}
+
+.status-text {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.move-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  z-index: 10;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.move-btn:hover {
+  background: #f0f0f0;
+}
+
+.map-view {
+  width: 100%;
+  height: 600px;
+}
+
+.hotspot-overlay {
+  padding: 5px 10px;
+  font-size: 12px;
+  background-color: white;
+  border: 1px solid red;
+  border-radius: 5px;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+

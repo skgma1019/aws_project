@@ -1,35 +1,43 @@
 // frontend/src/App.jsx
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useKakaoLoader } from "react-kakao-maps-sdk";
-import { useState, useEffect } from "react";
 
 import MapComponent from "./components/MapComponent";
+import LoginForm from "./components/LoginForm";       // 🚨 추가됨
+import RegisterForm from "./components/RegisterForm"; // 🚨 추가됨
+
 import "./App.css";
-import "./Header.css"; // 🚨 헤더 스타일 임포트
+import "./Header.css";
 
 function App() {
   const KAKAO_KEY = import.meta.env.VITE_KAKAO_MAP_API_KEY;
 
-  // 훅 정의
+  // --- 상태 관리 ---
+  // viewState: 'map' (지도), 'login' (로그인), 'register' (회원가입)
+  const [viewState, setViewState] = useState("map");
   const [showLoadingMessage, setShowLoadingMessage] = useState(true);
+  
+  // MapComponent의 함수를 호출하기 위한 Ref
+  const mapRef = useRef(null);
 
-  // 현재 MapComponent에는 '내 위치로' 버튼이 이미 구현되어 있습니다.
-  // App.jsx의 헤더 버튼을 누르면 MapComponent의 기능을 호출해야 합니다.
-  // 이 예시에서는 MapComponent를 Ref로 연결하지 않고 alert만 남겨두겠습니다.
+  // --- 핸들러 함수 ---
   const handleMenuClick = () => {
-    alert(
-      "메뉴 버튼 클릭: 로그인/회원가입, 건의 사항, 마이페이지 등의 사이드바를 열어야 합니다."
-    );
+    // 메뉴 버튼을 누르면 로그인 화면으로 전환 (또는 사이드바 구현 가능)
+    setViewState("login");
   };
 
   const handleCurrentLocationClick = () => {
-    alert(
-      "MapComponent 내부의 '내 위치로' 버튼 함수를 호출해야 합니다. (현재는 MapComponent의 내부 버튼을 사용하세요)"
-    );
-    // 실제 구현 시, MapComponent에 ref를 연결하여 moveToUserLocation 함수를 외부에서 호출해야 합니다.
+    if (viewState !== "map") {
+      setViewState("map"); // 지도가 아니면 지도로 먼저 이동
+    }
+    // 약간의 시간차를 두어 지도가 로드된 후 함수 호출
+    setTimeout(() => {
+      if (mapRef.current) mapRef.current.moveToUserLocation();
+    }, 100);
   };
 
+  // --- 지도 로더 ---
   const { loading, error } = useKakaoLoader({
     appkey: KAKAO_KEY || "TEMP_KEY",
     libraries: ["services"],
@@ -47,69 +55,57 @@ function App() {
     return () => clearTimeout(timer);
   }, [loading, KAKAO_KEY]);
 
-  // 조건부 렌더링
-  if (!KAKAO_KEY) {
-    return <div>❌ 카카오 API 키(.env 파일)를 설정해 주세요.</div>;
-  }
+  // --- 조건부 렌더링 (로딩/에러) ---
+  if (!KAKAO_KEY) return <div>❌ API 키 설정 필요</div>;
+  if (loading || showLoadingMessage) return <div className="loading-screen">로딩 중...</div>;
+  if (error) return <div>❌ 에러 발생: {error.message}</div>;
 
-  if (loading || showLoadingMessage) {
-    return (
-      <div className="mobile-layout">
-        <header className="app-header">
-          <h1 className="header-title">지도 로딩 중...</h1>
-        </header>
-        <main
-          className="app-main"
-          style={{ textAlign: "center", marginTop: "50px" }}
-        >
-          지도 SDK 로딩 중... 잠시만 기다려주세요.
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mobile-layout">
-        <header className="app-header">
-          <h1 className="header-title">오류 발생</h1>
-        </header>
-        <main
-          className="app-main"
-          style={{ textAlign: "center", color: "red", marginTop: "50px" }}
-        >
-          ❌ 지도 로딩 실패: 카카오 API 키 또는 등록 도메인을 확인하세요.
-          <br /> 오류 상세: {error.message || "알 수 없는 오류"}
-        </main>
-      </div>
-    );
-  }
-
-  // 로딩 성공 시 MapComponent 렌더링
   return (
     <div className="mobile-layout">
       {/* 1. 헤더 (고정) */}
       <header className="app-header">
-        {/* 왼쪽: 메뉴 버튼 (삼선) */}
-        <button className="icon-button left-icon" onClick={handleMenuClick}>
-          <span className="material-symbols-outlined">menu</span>
+        {/* 왼쪽: 지도가 아닐 때는 뒤로가기(지도보기) 버튼으로 변신 */}
+        <button 
+          className="icon-button left-icon" 
+          onClick={() => viewState === "map" ? handleMenuClick() : setViewState("map")}
+        >
+          <span className="material-symbols-outlined">
+            {viewState === "map" ? "menu" : "arrow_back"}
+          </span>
         </button>
 
-        {/* 가운데: 제목 */}
-        <h1 className="header-title">위험 지역 알림 서비스</h1>
+        {/* 가운데: 상태에 따른 제목 변경 */}
+        <h1 className="header-title">
+          {viewState === "map" && "위험 지역 알림"}
+          {viewState === "login" && "로그인"}
+          {viewState === "register" && "회원가입"}
+        </h1>
 
         {/* 오른쪽: 현재 위치로 버튼 */}
-        <button
-          className="action-button right-action"
-          onClick={handleCurrentLocationClick}
-        >
-          현재 위치로
+        <button className="action-button right-action" onClick={handleCurrentLocationClick}>
+          {viewState === "map" ? "내 위치" : "지도보기"}
         </button>
       </header>
 
-      {/* 2. 본문 (지도 및 상태) */}
+      {/* 2. 본문 (상태에 따라 다른 컴포넌트 렌더링) */}
       <main className="app-main">
-        <MapComponent />
+        {viewState === "map" && (
+          <MapComponent ref={mapRef} />
+        )}
+        
+        {viewState === "login" && (
+          <LoginForm 
+            onLoginSuccess={() => setViewState("map")} 
+            onGoToRegister={() => setViewState("register")} 
+          />
+        )}
+        
+        {viewState === "register" && (
+          <RegisterForm 
+            onRegisterSuccess={() => setViewState("login")} 
+            onGoToLogin={() => setViewState("login")} 
+          />
+        )}
       </main>
     </div>
   );
